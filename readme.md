@@ -16,3 +16,7 @@
 
 - https://devhints.io/bash
 - https://github.com/LeCoupa/awesome-cheatsheets/blob/master/languages/bash.sh
+
+### Useful Links
+
+- https://gist.github.com/TrinityCoder/911059c83e5f7a351b785921cf7ecdaa
