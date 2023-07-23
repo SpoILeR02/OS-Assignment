@@ -21,3 +21,9 @@
 
 - https://gist.github.com/TrinityCoder/911059c83e5f7a351b785921cf7ecdaa
 - https://www.cyberciti.biz/faq/grep-regular-expressions/
+
+### To Explain Regrex Pattern
+
+1. ^ : The caret symbol ^ at the beginning of the regular expression represents the start of a line. It ensures that the pattern we are searching for occurs at the beginning of a line.
+2. \[^;\]\* : The \[^;\] part is a character class denoted by square brackets. It matches any character that is not a semicolon ;. The asterisk \* following the character class means "zero or more occurrences," so \[^;\]\* will match any sequence of characters that does not contain semicolons.
+3. ; : The semicolon ; matches the actual semicolon character in the text.

@@ -42,8 +42,10 @@ $2
 EOF
 }
 
-SearchLineInFile() {
+SearchInFile() {
+  # result is global variable
   result=$(grep -w "$2" "$directoryPath/$1") #| cut -d: -f1
+  echo "$result"
 }
 
 PromptInput() {
@@ -133,15 +135,15 @@ RegisterPatron() {
   combinedString="$patronID;$patronName;$patronContact;$patronEmail"
   AppendToFile "patron.txt" "$combinedString"
 
-  UserSelection "Register For Another Patron" RegisterPatron
+  UserSelection "Register For New Patron" RegisterPatron
 }
 
-SearchPatron() {
+# A Function to be used in SearchPatron & PatronValidation
+IdentifyPatron() {
   local patronID
-  local subStrings
   ChkFileExist "patron.txt"
 
-  ProgramHeader "Search Patron Details"
+  ProgramHeader "$1"
 
   echo
   read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
@@ -149,7 +151,13 @@ SearchPatron() {
 
   print_centered "-" "-"
   # Force match the line starts with the given Patron ID
-  SearchLineInFile "patron.txt" "^$patronID"
+  SearchInFile "patron.txt" "^$patronID"
+}
+
+SearchPatron() {
+  local subStrings
+
+  IdentifyPatron "Search Patron Details"
 
   if [ -z "$result" ]; then
     echo "No Record Found!"
@@ -197,7 +205,6 @@ ListVenue() {
   local blockName
   local venueArray
   local subStrings
-
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
 
@@ -209,7 +216,7 @@ ListVenue() {
 
   print_centered "-" "-"
   # Force match the line starts with the given blockName
-  SearchLineInFile "venue.txt" "^$blockName"
+  SearchInFile "venue.txt" "^$blockName"
 
   if [ -z "$result" ]; then
     echo "No Record Found!"
@@ -239,15 +246,55 @@ ListVenue() {
   UserSelection "Search For Another Block Venue" ListVenue
 }
 
-# TODO: [] Book Venue
-BookVenue() {
-  local patronID
-  local roomNumber
+PatronValidation() {
+  # patronBooking is global variable
+  local subStrings
 
-  ChkFileExist "patron.txt"
+  IdentifyPatron "Patron Details Validation"
+
+  if [ -z "$result" ]; then
+    echo "Validation Failed! Patron ID is not found!"
+    UserSelection "Retry Patron Validation" PatronValidation
+  else
+    IFS=";"
+    read -ra subStrings <<<"$result"
+    IFS=$DEFAULT_IFS
+
+    patronBooking="${subStrings[0]}"
+    echo -e "Patron Name [Auto Display]: ${subStrings[1]}"
+    UserSelection "Proceed to Book Venue" BookVenue
+  fi
+}
+
+BookVenue() {
+  local roomNumber
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
 
+  ProgramHeader "Booking Venue"
+
+  echo
+  read -rp $'Please Enter Room Number: ' roomNumber
+  echo
+
+  print_centered "-" "-"
+
+  SearchInFile "venue.txt" "^[^;]*;$roomNumber"
+
+  if [ -z "$result" ]; then
+    echo "No Record Found!"
+  else
+    IFS=";"
+    read -ra subStrings <<<"$result"
+    IFS=$DEFAULT_IFS
+
+    echo -e "Room Type\t[Auto Display]: ${subStrings[2]}"
+    echo -e "Capacity\t[Auto Display]: ${subStrings[3]}"
+    echo -e "Remarks\t\t[Auto Display]: ${subStrings[4]}"
+
+  fi
+
+  UserSelection "Book For Another Venue" SearchPatron
 }
 
 MainMenu() {
@@ -290,7 +337,7 @@ MainMenu() {
 
   [E])
     clear
-    BookVenue
+    PatronValidation
     ;;
 
   [Q])
@@ -302,6 +349,7 @@ MainMenu() {
 }
 
 StartProgram() {
+  # DEFAULT_IFS is global variable
   clear
   DEFAULT_IFS=$IFS
 
