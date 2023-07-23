@@ -20,3 +20,4 @@
 ### Useful Links
 
 - https://gist.github.com/TrinityCoder/911059c83e5f7a351b785921cf7ecdaa
+- https://www.cyberciti.biz/faq/grep-regular-expressions/

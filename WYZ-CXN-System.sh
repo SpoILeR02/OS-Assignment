@@ -43,7 +43,7 @@ EOF
 }
 
 SearchLineInFile() {
-  result=$(grep "$2" "$directoryPath/$1") #| cut -d: -f1
+  result=$(grep -w "$2" "$directoryPath/$1") #| cut -d: -f1
 }
 
 PromptInput() {
@@ -53,7 +53,7 @@ PromptInput() {
     local validInputs=("A" "B" "C" "D" "E" "Q")
     # Convert to Uppercase using ^^, if require Lowercase use ,,
     while [[ ! "${validInputs[*]}" =~ (^| )"${userOption^^}"($| ) ]]; do
-      echo -e "\nInvalid Option. Enter Only [A], [B], [C], [D], [E] OR [Q]!"
+      echo -e "\nInvalid Option. Enter Only Single Character - [A], [B], [C], [D], [E] OR [Q]!"
       echo -e "Please Try Again!\n"
       read -rp "Please Enter Your Option: " userOption
     done
@@ -61,7 +61,7 @@ PromptInput() {
   else
     # Convert to Uppercase using ^^, if require Lowercase use ,,
     while [ "${userOption^^}" != "Y" ] && [ "${userOption^^}" != "N" ]; do
-      echo -e "\nInvalid Option. Enter Only [Y] or [N]!"
+      echo -e "\nInvalid Option. Enter Only Single Character - [Y] or [N]!"
       echo -e "Please Try Again!\n"
       read -rp "Please Enter Your Option: " userOption
     done
@@ -136,7 +136,6 @@ RegisterPatron() {
   UserSelection "Register For Another Patron" RegisterPatron
 }
 
-# TODO: [B] Search Patron Details
 SearchPatron() {
   local patronID
   local subStrings
@@ -148,7 +147,9 @@ SearchPatron() {
   read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
   echo
 
-  SearchLineInFile "patron.txt" "$patronID"
+  print_centered "-" "-"
+  # Force match the line starts with the given Patron ID
+  SearchLineInFile "patron.txt" "^$patronID"
 
   if [ -z "$result" ]; then
     echo "No Record Found!"
@@ -192,7 +193,51 @@ AddVenue() {
   UserSelection "Add Another New Venue" AddVenue
 }
 
-# TODO: [D] List Venue Details
+ListVenue() {
+  local blockName
+  local venueArray
+  local subStrings
+
+  ChkFileExist "venue.txt"
+  ChkFileExist "booking.txt"
+
+  ProgramHeader "List Venue Details"
+
+  echo
+  read -rp $'Please Enter Block Name: ' blockName
+  echo
+
+  print_centered "-" "-"
+  # Force match the line starts with the given blockName
+  SearchLineInFile "venue.txt" "^$blockName"
+
+  if [ -z "$result" ]; then
+    echo "No Record Found!"
+  else
+    #TODO: Add Read value from booking.txt to display status
+    echo -e "Room Number\tRoom Type\t\tCapacity\tRemarks\t\t\t\tStatus"
+    print_centered "-" "-"
+    readarray -t venueArray <<<"$result"
+
+    IFS=";"
+    for line in "${venueArray[@]}"; do
+      read -ra subStrings <<<"$line"
+
+      for index in "${!subStrings[@]}"; do
+        if [ "$index" = 0 ]; then # Don't display Block Name
+          continue
+        fi
+        echo -ne "${subStrings[index]}\t\t"
+      done
+
+      echo "Available" #Temperorily Hardcoded
+    done
+
+    IFS=$DEFAULT_IFS
+  fi
+
+  UserSelection "Search For Another Block Venue" ListVenue
+}
 
 # TODO: [] Book Venue
 BookVenue() {
@@ -240,7 +285,7 @@ MainMenu() {
 
   [D])
     clear
-    echo "List Venue"
+    ListVenue
     ;;
 
   [E])

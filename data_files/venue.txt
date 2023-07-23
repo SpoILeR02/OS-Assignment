@@ -1,0 +1,3 @@
+B;B001A;Computer Lab;24;For Practical Use Only
+SG;SG001;Lecture Hall;300;For Lecture Use Only
+B;B001B;Computer Lab;26;For Practical Use Only
