@@ -1,7 +1,8 @@
 #!/bin/bash
 
 ### GLOBAL VARIABLES ###
-declare -r directoryPath="$PWD/data_files"
+declare -r dataPath="$PWD/data_files"
+declare -r receiptsPath="$PWD/receipts"
 
 ### GLOBAL ENDS HERE ###
 
@@ -31,21 +32,18 @@ print_centered() {
 
 ### ENTIRE PROGRAM STARTS HERE ###
 ChkFileExist() {
-  if [ ! -f "$directoryPath/$1" ]; then
-    touch "$directoryPath/$1"
+  if [ ! -f "$dataPath/$1" ]; then
+    touch "$dataPath/$1"
   fi
 }
 
 AppendToFile() {
-  cat >>"$directoryPath/$1" <<EOF
-$2
-EOF
+  echo "$2" >>"$dataPath/$1"
 }
 
 SearchInFile() {
   # result is global variable
-  result=$(grep -w "$2" "$directoryPath/$1") #| cut -d: -f1
-  echo "$result"
+  result=$(grep -w "$2" "$dataPath/$1") #| cut -d: -f1
 }
 
 PromptInput() {
@@ -72,7 +70,7 @@ PromptInput() {
 
 ProgramHeader() {
   print_centered "=" "="
-  print_centered "University Venue Management Menu"
+  print_centered "University Venue Management System"
   print_centered "=" "="
   print_centered "$1"
   print_centered "-" "-"
@@ -88,7 +86,7 @@ ProgramFooter() {
 ExitProgram() {
   ProgramHeader "Exit Program"
 
-  echo
+  echo # Blank Line, \n
   print_centered "Thank You for using the University Venue Management System"
   print_centered "Hope to see you soon!"
   echo # Blank Line, \n
@@ -124,14 +122,15 @@ RegisterPatron() {
   ProgramHeader "Patron Registration"
 
   print_centered "Please Enter Patron's Detail According to the Format Below"
-  echo
+  echo # Blank Line, \n
 
-  # TODO: Add Validation for PATRON INPUT
+  # TODO: Add Validation for REGISTER PATRON INPUT [Register Patron]
   read -rp $'Patron ID [As per TAR UMT Format]\t: ' patronID
   read -rp $'Patron Full Name [As per NRIC]\t\t: ' patronName
   read -rp $'Contact Number\t\t\t\t: ' patronContact
   read -rp $'Email Address [As per TAR UMT Format]\t: ' patronEmail
 
+  local combinedString
   combinedString="$patronID;$patronName;$patronContact;$patronEmail"
   AppendToFile "patron.txt" "$combinedString"
 
@@ -145,9 +144,10 @@ IdentifyPatron() {
 
   ProgramHeader "$1"
 
-  echo
+  # TODO: Add Validation for PATRON ID INPUT [Search Patron]
+  echo # Blank Line, \n
   read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
-  echo
+  echo # Blank Line, \n
 
   print_centered "-" "-"
   # Force match the line starts with the given Patron ID
@@ -187,7 +187,7 @@ AddVenue() {
   print_centered "Please Enter Venue's Detail According to the Format Below"
   echo
 
-  # TODO: Add Validation for PATRON INPUT
+  # TODO: Add Validation for VENUE INPUT [Register Venue]
   read -rp $'Block Name\t: ' blockName
   read -rp $'Room Number\t: ' roomNumber
   read -rp $'Room Type\t: ' roomType
@@ -195,6 +195,7 @@ AddVenue() {
   read -rp $'Room Remarks\t: ' roomRemarks
   echo -e "Room Status\t: Available (Default)"
 
+  local combinedString
   combinedString="$blockName;$roomNumber;$roomType;$roomCapacity;$roomRemarks"
   AppendToFile "venue.txt" "$combinedString"
 
@@ -210,9 +211,10 @@ ListVenue() {
 
   ProgramHeader "List Venue Details"
 
-  echo
+  # TODO: Add Validation for BLOCK NAME INPUT [SEARCH Venue]
+  echo # Blank Line, \n
   read -rp $'Please Enter Block Name: ' blockName
-  echo
+  echo # Blank Line, \n
 
   print_centered "-" "-"
   # Force match the line starts with the given blockName
@@ -221,11 +223,12 @@ ListVenue() {
   if [ -z "$result" ]; then
     echo "No Record Found!"
   else
-    #TODO: Add Read value from booking.txt to display status
+    # TODO: Add Read value from booking.txt to display status
     echo -e "Room Number\tRoom Type\t\tCapacity\tRemarks\t\t\t\tStatus"
     print_centered "-" "-"
     readarray -t venueArray <<<"$result"
 
+    # TODO: Check if the venue is booked, if yes then show UNAVAILABLE
     IFS=";"
     for line in "${venueArray[@]}"; do
       read -ra subStrings <<<"$line"
@@ -247,7 +250,7 @@ ListVenue() {
 }
 
 PatronValidation() {
-  # patronBooking is global variable
+  # patronDetailsBooking is global variable
   local subStrings
 
   IdentifyPatron "Patron Details Validation"
@@ -260,7 +263,7 @@ PatronValidation() {
     read -ra subStrings <<<"$result"
     IFS=$DEFAULT_IFS
 
-    patronBooking="${subStrings[0]}"
+    patronDetailsBooking=("${subStrings[0]}" "${subStrings[1]}")
     echo -e "Patron Name [Auto Display]: ${subStrings[1]}"
     UserSelection "Proceed to Book Venue" BookVenue
   fi
@@ -273,16 +276,18 @@ BookVenue() {
 
   ProgramHeader "Booking Venue"
 
-  echo
+  # TODO: Add Validation for ROOM NUMBER INPUT [Book Venue]
+  echo # Blank Line, \n
   read -rp $'Please Enter Room Number: ' roomNumber
-  echo
+  echo # Blank Line, \n
 
   print_centered "-" "-"
 
   SearchInFile "venue.txt" "^[^;]*;$roomNumber"
 
   if [ -z "$result" ]; then
-    echo "No Record Found!"
+    echo "Invalid Room Number! Room Number is not found!"
+    UserSelection "Retry Booking" BookVenue
   else
     IFS=";"
     read -ra subStrings <<<"$result"
@@ -291,10 +296,63 @@ BookVenue() {
     echo -e "Room Type\t[Auto Display]: ${subStrings[2]}"
     echo -e "Capacity\t[Auto Display]: ${subStrings[3]}"
     echo -e "Remarks\t\t[Auto Display]: ${subStrings[4]}"
+    # TODO: Add IF-ELSE to check status from booking.txt
+    echo -e "Status\t\t[Auto Display]: Available (Temp Hardcoded)"
 
+    echo # Blank Line, \n
+    print_centered "-" "-"
+    echo -e "Notes:\tThe booking hours shall be from 0800hrs (8.00am) to 2000hrs (8.00pm) only."
+    echo -e "\tThe booking duration shall be at least 30 minutes per booking."
+
+    echo # Blank Line, \n
+    print_centered "-" "-"
+    print_centered "Please Enter Booking Details According to the Format Below"
+
+    # TODO: Add Validation for BOOKING DETAILS INPUT [Book Venue]
+    # Variables below are global variables
+    echo # Blank Line, \n
+    read -rp $'Booking Date\t\t[DD/MM/YYYY]\t: ' bookingDate
+    read -rp $'Booking From\t\t[HH:MM]\t\t: ' bookingTimeFrom
+    read -rp $'Booking Until\t\t[HH:MM]\t\t: ' bookingTimeTo
+    read -rp $'Booking Purpose\t\t\t\t: ' bookingPurpose
+
+    UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip"
   fi
+}
 
-  UserSelection "Book For Another Venue" SearchPatron
+GenerateBookingSlip() {
+  local currentDateTime
+  local combinedString
+  local generatedReceiptFile
+
+  currentDateTime=$(date "+%d/%m/%Y %H:%M:%S")
+  combinedString="${patronDetailsBooking[0]};${patronDetailsBooking[1]};$roomNumber;$bookingDate;$bookingTimeFrom;$bookingTimeTo;$bookingPurpose"
+  generatedReceiptFile="$receiptsPath/${patronDetailsBooking[0]}_${roomNumber}_$(date "+%d-%m-%Y %H%M%S").txt"
+  AppendToFile "booking.txt" "$combinedString"
+
+  cat >>"$generatedReceiptFile" <<EOF
+
+                            Venue Booking Slip
+
+Patron ID: ${patronDetailsBooking[0]}                                    Patron Name: ${patronDetailsBooking[1]}
+
+Room Number: $roomNumber
+
+Booking Date: $bookingDate
+
+Booking From: $bookingTimeFrom                                  Booking Until: $bookingTimeTo
+
+Booking Purpose: $bookingPurpose
+
+    This is a system generated booking slip with no signature required.
+
+                      Printed on $currentDateTime
+EOF
+
+  ProgramHeader "Generated Booking Slip"
+  cat "$generatedReceiptFile"
+
+  UserSelection "Register For Another Booking" MainMenu
 }
 
 MainMenu() {
@@ -343,6 +401,7 @@ MainMenu() {
   [Q])
     clear
     ExitProgram
+    exit 0
     ;;
 
   esac
@@ -353,8 +412,9 @@ StartProgram() {
   clear
   DEFAULT_IFS=$IFS
 
-  if [ ! -d "$directoryPath" ]; then
-    mkdir "$directoryPath"
+  if [ ! -d "$dataPath" ]; then
+    mkdir "$dataPath"
+    mkdir "$receiptsPath"
     MainMenu
   else
     MainMenu
