@@ -124,11 +124,71 @@ RegisterPatron() {
   print_centered "Please Enter Patron's Detail According to the Format Below"
   echo # Blank Line, \n
 
-  # TODO: Add Validation for REGISTER PATRON INPUT [Register Patron]
-  read -rp $'Patron ID [As per TAR UMT Format]\t: ' patronID
-  read -rp $'Patron Full Name [As per NRIC]\t\t: ' patronName
-  read -rp $'Contact Number\t\t\t\t: ' patronContact
-  read -rp $'Email Address [As per TAR UMT Format]\t: ' patronEmail
+  # Ensure only 4 or 7 digits are entered as input
+  while true; do
+    read -rp $'Patron ID [As per TAR UMT Format]\t: ' patronID
+    SearchInFile "patron.txt" "^$patronID" # Search the entered patronID
+
+    if [[ -z $patronID ]]; then
+      echo -e "\nInvalid input. Patron ID cannot be empty!\n"
+    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
+      echo -e "\nInvalid input. Patron ID must be 4 or 7 digits!\n"
+    elif [[ -n $result ]]; then # No duplicate of data (Patron ID) is allowed
+      echo -e "\nInvalid input. Patron ID entered was found in database, NO DUPLICATION of Patron ID is allowed!\n"
+    else
+      break
+    fi
+  done
+
+  # Ensure name only contain alphabets and space
+  while true; do
+    read -rp $'Patron Full Name [As per NRIC]\t\t: ' patronName
+
+    if [[ -z $patronName ]]; then
+      echo -e "\nInvalid input. Name cannot be empty!\n"
+    elif [[ ! $patronName =~ ^[a-zA-Z[:space:]]+$ ]]; then
+      echo -e "\nInvalid input. Name should not contain characters other than alphabets!\n"
+    else
+      break
+    fi
+  done
+
+  # Ensure contact number met the pattern XXX-XXXXXXX [10 digits] OR XXX-XXXXXXXX [11 digits]
+  while true; do
+    read -rp $'Contact Number\t\t\t\t: ' patronContact
+
+    if [[ -z "$patronContact" ]]; then
+      echo -e "\nInvalid input. Contact number cannot be empty.\n"
+    # Check if the input matches the phone number pattern
+    elif [[ ! "$patronContact" =~ ^[0-9]{10,11}$ && ! "$patronContact" =~ ^[0-9]{3}-[0-9]{7,8}$ ]]; then
+      echo -e "\nInvalid input. Please enter the phone number in the correct format."
+      echo "[FORMAT 1]: XXX-XXXXXXX [10 digits/ 11 digits]"
+      echo -e "[FORMAT 2]: XXXXXXXXXXX [10 digits/ 11 digits]\n"
+    else
+      # If the user entered only numerics and the number of digits is 10 or 11,
+      # add a dash after the third digit
+      if [[ "${patronContact:3:1}" != "-" ]]; then
+        patronContact="${patronContact:0:3}-${patronContact:3}"
+      fi
+      break
+    fi
+  done
+
+  # Ensure Email Address met the pattern *@tarc.edu.my OR *@student.tarc.edu.my
+  while true; do
+    read -rp $'Email Address [As per TAR UMT Format]\t: ' patronEmail
+    # Check if the input is empty
+    if [[ -z "$patronEmail" ]]; then
+      echo -e "\nInvalid input. Please Email address cannot be empty.\n"
+    # Check if the email matches the specified patterns
+    elif [[ ! "$patronEmail" =~ ^.+@student.tarc.edu.my$ && ! "$patronEmail" =~ ^.+@tarc.edu.my$ ]]; then
+      echo -e "\nInvalid input. Please enter the Email Address in the correct format."
+      echo -e "[FORMAT 1]: *@tarc.edu.my\t\t[For Staff]"
+      echo -e "[FORMAT 2]: *@student.tarc.edu.my\t[For Student]\n"
+    else
+      break
+    fi
+  done
 
   local combinedString
   combinedString="$patronID;$patronName;$patronContact;$patronEmail"
