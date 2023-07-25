@@ -204,11 +204,21 @@ IdentifyPatron() {
 
   ProgramHeader "$1"
 
-  # TODO: Add Validation for PATRON ID INPUT [Search Patron]
   echo # Blank Line, \n
-  read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
-  echo # Blank Line, \n
+  # Ensure only 4 or 7 digits are entered as input
+  while true; do
+    read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
 
+    if [[ -z $patronID ]]; then
+      echo -e "\nInvalid input. Patron ID cannot be empty!\n"
+    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
+      echo -e "\nInvalid input. Patron ID must be 4 or 7 digits!\n"
+    else
+      break
+    fi
+  done
+
+  echo # Blank Line, \n
   print_centered "-" "-"
   # Force match the line starts with the given Patron ID
   SearchInFile "patron.txt" "^$patronID"
