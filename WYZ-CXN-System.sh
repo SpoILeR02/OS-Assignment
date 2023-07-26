@@ -459,18 +459,31 @@ BookVenue() {
 
     # Validate Data, ensure the date is in the correct format & is tomorrow
     while true; do
-      read -rp $'Booking Date\t\t[DD/MM/YYYY]\t: ' bookingDate
+      read -rp $'Booking Date\t\t[MM/DD/YYYY]\t: ' bookingDate
 
       if [[ -z $bookingDate ]]; then
         echo -e "\nInvalid input. Booking Date cannot be EMPTY!\n"
-      elif [[ ! $bookingDate =~ ^[0-3][0-9]/[0-1][0-9]/[0-9]{4}$ ]]; then
+      elif [[ ! $bookingDate =~ ^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$ ]]; then
         echo -e "\nInvalid input. Please enter the Booking Date in the correct FORMAT."
-        echo -e "[FORMAT]: DD/MM/YYYY, i.e 29/06/2023\n"
-      # FIXME: Command is not working in macOS, find alternative?
-      elif [[ "$(date -d "$bookingDate" '+%d/%m/%Y')" < "$(date -d "tomorrow" '+%d/%m/%Y')" ]]; then
-        echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
+        echo -e "[FORMAT]: MM/DD/YYYY, i.e 06/29/2023\n"
+      # Instead of using [date -d] which works for GNU/Linux Systems,
+      # Consider using [date -j] (BSD) which works for macOS and Linux Systems.
       else
-        break
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          # macOS
+          if [[ "$(date -j -f '%m/%d/%Y' "$bookingDate" '+%m/%d/%Y')" < "$(date -v+1d '+%m/%d/%Y')" ]]; then
+            echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
+          else
+            break
+          fi
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          # GNU/Linux
+          if [[ "$(date -d "$bookingDate" '+%m/%d/%Y')" < "$(date -d "tomorrow" '+%m/%d/%Y')" ]]; then
+            echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
+          else
+            break
+          fi
+        fi
       fi
     done
 
