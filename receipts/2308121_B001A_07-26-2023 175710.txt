@@ -1,16 +1,16 @@
 
                             Venue Booking Slip
 
-Patron ID: 230812                                    Patron Name: Tan Mei Lee
+Patron ID: 2308121                                   Patron Name: Tan Mei Lee
 
 Room Number: B001A
 
-Booking Date: 28/02/2023
+Booking Date: 07/27/2023
 
 Booking From: 14:00                                  Booking Until: 16:00
 
-Booking Purpose: For FYP Purpose
+Booking Purpose: For FYP Presentation
 
     This is a system generated booking slip with no signature required.
 
-                      Printed on 23/07/2023 20:42:00
+                      Printed on 26/07/2023 17:57:10
