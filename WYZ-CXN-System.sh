@@ -331,11 +331,21 @@ ListVenue() {
 
   ProgramHeader "List Venue Details"
 
-  # TODO: Add Validation for BLOCK NAME INPUT [SEARCH Venue]
   echo # Blank Line, \n
-  read -rp $'Please Enter Block Name: ' blockName
-  echo # Blank Line, \n
+  # Ensure only one or two character was entered as input
+  while true; do
+    read -rp $'Please Enter Block Name: ' blockName
 
+    if [[ -z $blockName ]]; then
+      echo -e "\nInvalid input. Block Name cannot be EMPTY!\n"
+    elif [[ ! $blockName =~ ^[a-zA-Z]{1,2}$ ]]; then
+      echo -e "\nInvalid input. Block Name must be ONE or TWO alphabets!\n"
+    else
+      break
+    fi
+  done
+
+  echo # Blank Line, \n
   print_centered "-" "-"
   # Force match the line starts with the given blockName
   SearchInFile "venue.txt" "^$blockName"
