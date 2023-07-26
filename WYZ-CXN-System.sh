@@ -130,9 +130,9 @@ RegisterPatron() {
     SearchInFile "patron.txt" "^$patronID" # Search the entered patronID
 
     if [[ -z $patronID ]]; then
-      echo -e "\nInvalid input. Patron ID cannot be empty!\n"
+      echo -e "\nInvalid input. Patron ID cannot be EMPTY!\n"
     elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
-      echo -e "\nInvalid input. Patron ID must be 4 or 7 digits!\n"
+      echo -e "\nInvalid input. Patron ID must be FOUR or SEVEN digits!\n"
     elif [[ -n $result ]]; then # No duplicate of data (Patron ID) is allowed
       echo -e "\nInvalid input. Patron ID entered was found in database, NO DUPLICATION of Patron ID is allowed!\n"
     else
@@ -145,9 +145,9 @@ RegisterPatron() {
     read -rp $'Patron Full Name [As per NRIC]\t\t: ' patronName
 
     if [[ -z $patronName ]]; then
-      echo -e "\nInvalid input. Name cannot be empty!\n"
+      echo -e "\nInvalid input. Name cannot be EMPTY!\n"
     elif [[ ! $patronName =~ ^[a-zA-Z[:space:]]+$ ]]; then
-      echo -e "\nInvalid input. Name should not contain characters other than alphabets!\n"
+      echo -e "\nInvalid input. Name should only contain ALPHABETS!\n"
     else
       break
     fi
@@ -158,10 +158,10 @@ RegisterPatron() {
     read -rp $'Contact Number\t\t\t\t: ' patronContact
 
     if [[ -z "$patronContact" ]]; then
-      echo -e "\nInvalid input. Contact number cannot be empty.\n"
+      echo -e "\nInvalid input. Contact number cannot be EMPTY.\n"
     # Check if the input matches the phone number pattern
     elif [[ ! "$patronContact" =~ ^[0-9]{10,11}$ && ! "$patronContact" =~ ^[0-9]{3}-[0-9]{7,8}$ ]]; then
-      echo -e "\nInvalid input. Please enter the phone number in the correct format."
+      echo -e "\nInvalid input. Please enter the phone number in the correct FORMAT."
       echo "[FORMAT 1]: XXX-XXXXXXX [10 digits/ 11 digits]"
       echo -e "[FORMAT 2]: XXXXXXXXXXX [10 digits/ 11 digits]\n"
     else
@@ -179,10 +179,10 @@ RegisterPatron() {
     read -rp $'Email Address [As per TAR UMT Format]\t: ' patronEmail
     # Check if the input is empty
     if [[ -z "$patronEmail" ]]; then
-      echo -e "\nInvalid input. Please Email address cannot be empty.\n"
+      echo -e "\nInvalid input. Please Email address cannot be EMPTY.\n"
     # Check if the email matches the specified patterns
     elif [[ ! "$patronEmail" =~ ^.+@student.tarc.edu.my$ && ! "$patronEmail" =~ ^.+@tarc.edu.my$ ]]; then
-      echo -e "\nInvalid input. Please enter the Email Address in the correct format."
+      echo -e "\nInvalid input. Please enter the Email Address in the correct FORMAT."
       echo -e "[FORMAT 1]: *@tarc.edu.my\t\t[For Staff]"
       echo -e "[FORMAT 2]: *@student.tarc.edu.my\t[For Student]\n"
     else
@@ -210,9 +210,9 @@ IdentifyPatron() {
     read -rp $'Please Enter Patron ID [As per TAR UMT Format]: ' patronID
 
     if [[ -z $patronID ]]; then
-      echo -e "\nInvalid input. Patron ID cannot be empty!\n"
+      echo -e "\nInvalid input. Patron ID cannot be EMPTY!\n"
     elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
-      echo -e "\nInvalid input. Patron ID must be 4 or 7 digits!\n"
+      echo -e "\nInvalid input. Patron ID must be FOUR or SEVEN digits!\n"
     else
       break
     fi
@@ -257,11 +257,61 @@ AddVenue() {
   print_centered "Please Enter Venue's Detail According to the Format Below"
   echo
 
-  # TODO: Add Validation for VENUE INPUT [Register Venue]
-  read -rp $'Block Name\t: ' blockName
-  read -rp $'Room Number\t: ' roomNumber
-  read -rp $'Room Type\t: ' roomType
-  read -rp $'Room Capacity\t: ' roomCapacity
+  # Ensure only one or two character was entered as input
+  while true; do
+    read -rp $'Block Name\t: ' blockName
+
+    if [[ -z $blockName ]]; then
+      echo -e "\nInvalid input. Block Name cannot be EMPTY!\n"
+    elif [[ ! $blockName =~ ^[a-zA-Z]{1,2}$ ]]; then
+      echo -e "\nInvalid input. Block Name must be ONE or TWO alphabets!\n"
+    else
+      break
+    fi
+  done
+
+  # Ensure the room number starts with the block name, and only accept maximum 4 alphanumeric characters
+  while true; do
+    read -rp $'Room Number\t: ' roomNumber
+    SearchInFile "venue.txt" "^[^;]*;$roomNumber"
+
+    if [[ -z $roomNumber ]]; then
+      echo -e "\nInvalid input. Room Number cannot be empty!\n"
+    elif [[ ! $roomNumber =~ ^${blockName}[[:alnum:]]{3,4}$ ]]; then
+      echo -e "\nInvalid input. Room Number must starts with Block Name and followed by 3 OR 4 !\n"
+    elif [[ -n $result ]]; then # No duplicate of data (Patron ID) is allowed
+      echo -e "\nInvalid input. Room Number entered was found in database, NO DUPLICATION of Room Number is allowed!\n"
+    else
+      break
+    fi
+  done
+
+  # Ensure room type only contain alphabets and space
+  while true; do
+    read -rp $'Room Type\t: ' roomType
+
+    if [[ -z $roomType ]]; then
+      echo -e "\nInvalid input. Name cannot be EMPTY!\n"
+    elif [[ ! $roomType =~ ^[a-zA-Z[:space:]]+$ ]]; then
+      echo -e "\nInvalid input. Name should only contain ALPHABETS!\n"
+    else
+      break
+    fi
+  done
+
+  # Ensure room capacity only accept digits as input
+  while true; do
+    read -rp $'Room Capacity\t: ' roomCapacity
+
+    if [[ -z $roomCapacity ]]; then
+      echo -e "\nInvalid input. Room Capacity cannot be EMPTY!\n"
+    elif [[ ! $roomCapacity =~ ^[0-9]+$ ]]; then
+      echo -e "\nInvalid input. Room Capacity should only contain DIGITS!\n"
+    else
+      break
+    fi
+  done
+
   read -rp $'Room Remarks\t: ' roomRemarks
   echo -e "Room Status\t: Available (Default)"
 
