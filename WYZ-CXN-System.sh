@@ -105,7 +105,7 @@ UserSelection() {
   PromptInput "others"
   if [ "${userOption^^}" == "Y" ]; then
     clear
-    $2
+    $2 "${@:3}"
   else
     clear
     MainMenu
@@ -278,7 +278,7 @@ AddVenue() {
     if [[ -z $roomNumber ]]; then
       echo -e "\nInvalid input. Room Number cannot be empty!\n"
     elif [[ ! $roomNumber =~ ^${blockName}[[:alnum:]]{3,4}$ ]]; then
-      echo -e "\nInvalid input. Room Number must starts with Block Name and followed by 3 OR 4 !\n"
+      echo -e "\nInvalid input. Room Number must starts with Block Name and followed by THREE or FOUR ALPHANUMERIC CHARACTER!\n"
     elif [[ -n $result ]]; then # No duplicate of data (Patron ID) is allowed
       echo -e "\nInvalid input. Room Number entered was found in database, NO DUPLICATION of Room Number is allowed!\n"
     else
@@ -358,7 +358,7 @@ ListVenue() {
     print_centered "-" "-"
     readarray -t venueArray <<<"$result"
 
-    # TODO: Check if the venue is booked, if yes then show UNAVAILABLE
+    # Check if the venue is booked, if yes then show UNAVAILABLE
     IFS=";"
     for line in "${venueArray[@]}"; do
       read -ra subStrings <<<"$line"
@@ -401,16 +401,34 @@ PatronValidation() {
 
 BookVenue() {
   local roomNumber
+  local bookingDate
+  local bookingTimeFrom
+  local bookingTimeTo
+  local bookingPurpose
+  local calcStartMinutes
+  local calcEndMinutes
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
 
   ProgramHeader "Booking Venue"
 
-  # TODO: Add Validation for ROOM NUMBER INPUT [Book Venue]
   echo # Blank Line, \n
-  read -rp $'Please Enter Room Number: ' roomNumber
-  echo # Blank Line, \n
+  # Validate room number
+  while true; do
+    read -rp $'Please Enter Room Number: ' roomNumber
 
+    if [[ -z $roomNumber ]]; then
+      echo -e "\nInvalid input. Room Number cannot be empty!\n"
+    elif [[ ! $roomNumber =~ ^[[:alpha:]]{1,2}[[:alnum:]]{3,4}$ ]]; then
+      echo -e "\nInvalid input. Please enter the room number in the correct FORMAT."
+      echo "Block Name [1 OR 2 Alphabets] + Room Number [3 OR 4 Alphanumeric Characters]"
+      echo -e "i.e B100A\n"
+    else
+      break
+    fi
+  done
+
+  echo # Blank Line, \n
   print_centered "-" "-"
 
   SearchInFile "venue.txt" "^[^;]*;$roomNumber"
@@ -437,16 +455,67 @@ BookVenue() {
     echo # Blank Line, \n
     print_centered "-" "-"
     print_centered "Please Enter Booking Details According to the Format Below"
-
-    # TODO: Add Validation for BOOKING DETAILS INPUT [Book Venue]
-    # Variables below are global variables
     echo # Blank Line, \n
-    read -rp $'Booking Date\t\t[DD/MM/YYYY]\t: ' bookingDate
-    read -rp $'Booking From\t\t[HH:MM]\t\t: ' bookingTimeFrom
-    read -rp $'Booking Until\t\t[HH:MM]\t\t: ' bookingTimeTo
+
+    # Validate Data, ensure the date is in the correct format & is tomorrow
+    while true; do
+      read -rp $'Booking Date\t\t[DD/MM/YYYY]\t: ' bookingDate
+
+      if [[ -z $bookingDate ]]; then
+        echo -e "\nInvalid input. Booking Date cannot be EMPTY!\n"
+      elif [[ ! $bookingDate =~ ^[0-3][0-9]/[0-1][0-9]/[0-9]{4}$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Date in the correct FORMAT."
+        echo -e "[FORMAT]: DD/MM/YYYY, i.e 29/06/2023\n"
+      # FIXME: Command is not working in macOS, find alternative?
+      elif [[ "$(date -d "$bookingDate" '+%d/%m/%Y')" < "$(date -d "tomorrow" '+%d/%m/%Y')" ]]; then
+        echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
+      else
+        break
+      fi
+    done
+
+    # Validate Data, ensure the time is in the correct format & is within the range
+    while true; do
+      read -rp $'Booking From\t\t[HH:MM]\t\t: ' bookingTimeFrom
+
+      if [[ -z $bookingTimeFrom ]]; then
+        echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
+      elif [[ ! $bookingTimeFrom =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
+        echo -e "[FORMAT]: HH:MM, i.e 14:00\n"
+      elif [[ $bookingTimeFrom < "08:00" || $bookingTimeFrom > "19:30" ]]; then
+        echo -e "\nInvalid input. Booking Time From can only in between 0800hrs (8.00am) to 1930hrs (7.30pm)!\n"
+      else
+        calcStartMinutes=$((10#$(tr -d ':' <<<"$bookingTimeFrom")))
+        break
+      fi
+    done
+
+    while true; do
+      read -rp $'Booking Until\t\t[HH:MM]\t\t: ' bookingTimeTo
+
+      if [[ -z $bookingTimeTo ]]; then
+        echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
+      elif [[ ! $bookingTimeTo =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
+        echo -e "[FORMAT]: HH:MM, i.e 15:30\n"
+      elif [[ $bookingTimeTo < "08:30" || $bookingTimeTo > "20:00" ]]; then
+        echo -e "\nInvalid input. Booking Time Until can only in between 0830hrs (8.30am) to 2000hrs (8.00pm)!\n"
+      elif [[ $bookingTimeTo < $bookingTimeFrom ]]; then
+        echo -e "\nInvalid input. Booking Time Until cannot be earlier than Booking Time From!\n"
+      else
+        calcEndMinutes=$((10#$(tr -d ':' <<<"$bookingTimeTo")))
+        if [[ $((calcEndMinutes - calcStartMinutes)) -lt 30 ]]; then
+          echo -e "\nInvalid input. A booking must be at least 30 minutes!\n"
+        else
+          break
+        fi
+      fi
+    done
+
     read -rp $'Booking Purpose\t\t\t\t: ' bookingPurpose
 
-    UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip"
+    UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip" "$roomNumber" "$bookingDate" "$bookingTimeFrom" "$bookingTimeTo" "$bookingPurpose"
   fi
 }
 
@@ -456,23 +525,23 @@ GenerateBookingSlip() {
   local generatedReceiptFile
 
   currentDateTime=$(date "+%d/%m/%Y %H:%M:%S")
-  combinedString="${patronDetailsBooking[0]};${patronDetailsBooking[1]};$roomNumber;$bookingDate;$bookingTimeFrom;$bookingTimeTo;$bookingPurpose"
-  generatedReceiptFile="$receiptsPath/${patronDetailsBooking[0]}_${roomNumber}_$(date "+%d-%m-%Y %H%M%S").txt"
+  combinedString="${patronDetailsBooking[0]};${patronDetailsBooking[1]};$1;$2;$3;$4;$5"
+  generatedReceiptFile="$receiptsPath/${patronDetailsBooking[0]}_${1}_$(date "+%d-%m-%Y %H%M%S").txt"
   AppendToFile "booking.txt" "$combinedString"
 
   cat >>"$generatedReceiptFile" <<EOF
 
                             Venue Booking Slip
 
-Patron ID: ${patronDetailsBooking[0]}                                    Patron Name: ${patronDetailsBooking[1]}
+Patron ID: ${patronDetailsBooking[0]}                                   Patron Name: ${patronDetailsBooking[1]}
 
-Room Number: $roomNumber
+Room Number: $1
 
-Booking Date: $bookingDate
+Booking Date: $2
 
-Booking From: $bookingTimeFrom                                  Booking Until: $bookingTimeTo
+Booking From: $3                                  Booking Until: $4
 
-Booking Purpose: $bookingPurpose
+Booking Purpose: $5
 
     This is a system generated booking slip with no signature required.
 
