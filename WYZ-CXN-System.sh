@@ -325,6 +325,7 @@ AddVenue() {
 ListVenue() {
   local blockName
   local venueArray
+  local roomStatus
   local subStrings
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
@@ -353,7 +354,6 @@ ListVenue() {
   if [ -z "$result" ]; then
     echo "No Record Found!"
   else
-    # TODO: Add Read value from booking.txt to display status
     echo -e "Room Number\tRoom Type\t\tCapacity\tRemarks\t\t\t\tStatus"
     print_centered "-" "-"
     readarray -t venueArray <<<"$result"
@@ -370,7 +370,27 @@ ListVenue() {
         echo -ne "${subStrings[index]}\t\t"
       done
 
-      echo "Available" #Temperorily Hardcoded
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS
+        SearchInFile "booking.txt" "^[^;]*;[^;]*;${subStrings[1]};$(date -v+1d '+%m/%d/%Y')"
+
+        if [ -z "$result" ]; then
+          roomStatus="Available"
+        else
+          roomStatus="Unavailable"
+        fi
+      elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        # GNU/Linux
+        SearchInFile "booking.txt" "^[^;]*;[^;]*;${subStrings[1]};$(date -d "tomorrow" '+%m/%d/%Y')"
+
+        if [ -z "$result" ]; then
+          roomStatus="Available"
+        else
+          roomStatus="Unavailable"
+        fi
+      fi
+
+      echo $roomStatus
     done
 
     IFS=$DEFAULT_IFS
@@ -401,7 +421,7 @@ PatronValidation() {
 
 BookVenue() {
   local roomNumber
-  local validStatus
+  local roomStatus
   local bookingDate
   local bookingTimeFrom
   local bookingTimeTo
@@ -451,24 +471,24 @@ BookVenue() {
       SearchInFile "booking.txt" "^[^;]*;[^;]*;$roomNumber;$(date -v+1d '+%m/%d/%Y')"
 
       if [ -z "$result" ]; then
-        validStatus="Available"
+        roomStatus="Available"
       else
-        validStatus="Unavailable"
+        roomStatus="Unavailable"
       fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       # GNU/Linux
       SearchInFile "booking.txt" "^[^;]*;[^;]*;$roomNumber;$(date -d "tomorrow" '+%m/%d/%Y')"
 
       if [ -z "$result" ]; then
-        validStatus="Available"
+        roomStatus="Available"
       else
-        validStatus="Unavailable"
+        roomStatus="Unavailable"
       fi
     fi
 
-    echo -e "Status\t\t[Auto Display]: $validStatus"
+    echo -e "Status\t\t[Auto Display]: $roomStatus"
 
-    if [[ $validStatus == "Unavailable" ]]; then
+    if [[ $roomStatus == "Unavailable" ]]; then
       echo # Blank Line, \n
       print_centered "-" "-"
       echo "Unfortunately, the venue [$roomNumber] has been booked for tomorrow."
