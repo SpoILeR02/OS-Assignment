@@ -43,7 +43,7 @@ AppendToFile() {
 
 SearchInFile() {
   # result is global variable
-  result=$(grep -w "$2" "$dataPath/$1") #| cut -d: -f1
+  result=$(grep -w "$2" "$dataPath/$1" | sort) #| cut -d: -f1
 }
 
 PromptInput() {

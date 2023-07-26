@@ -1,3 +1,7 @@
 B;B001A;Computer Lab;24;For Practical Use Only
 SG;SG001;Lecture Hall;300;For Lecture Use Only
 B;B001B;Computer Lab;26;For Practical Use Only
+A;A001F;Tutorial;30;asd
+A;A001B;Tutorial;25;fsda
+A;A001C;Tutorial;28;GDafsdg
+A;A001G;Tutorial;1234;asdf
