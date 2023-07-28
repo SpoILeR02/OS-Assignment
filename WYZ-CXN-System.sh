@@ -6,7 +6,6 @@ declare -r receiptsPath="$PWD/receipts"
 
 ### GLOBAL ENDS HERE ###
 
-# FIXME: Change, cannot use PRINTF
 ### FORMATTING PURPOSE ###
 print_centered() {
   [[ $# == 0 ]] && return 1
