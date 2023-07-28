@@ -15,18 +15,22 @@ print_centered() {
   declare -i -r str_len="${#1}"
   [[ $str_len -ge $TERM_COLS ]] && {
     echo "$1"
+    return
   }
 
   declare -i filler_len="$(((TERM_COLS - str_len) / 2))"
   [[ $# -ge 2 ]] && ch="${2:0:1}" || ch=" "
   filler=""
-  for ((i = 0; i < filler_len; i++)); do
+
+  local counter=0
+  while [[ $counter -lt $filler_len ]]; do
     filler="${filler}${ch}"
+    ((counter += 1))
   done
 
-  printf "%s%s%s" "$filler" "$1" "$filler"
-  [[ $(((TERM_COLS - str_len) % 2)) -ne 0 ]] && printf "%s" "${ch}"
-  printf "\n"
+  echo -n "$filler$1$filler"
+  [[ $(((TERM_COLS - str_len) % 2)) -ne 0 ]] && echo -n "${ch}"
+  echo
 }
 
 ### FORMATTING ENDS HERE ###
