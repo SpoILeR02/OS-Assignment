@@ -6,6 +6,7 @@ declare -r receiptsPath="$PWD/receipts"
 
 ### GLOBAL ENDS HERE ###
 
+# FIXME: Change, cannot use PRINTF
 ### FORMATTING PURPOSE ###
 print_centered() {
   [[ $# == 0 ]] && return 1
@@ -131,8 +132,10 @@ RegisterPatron() {
 
     if [[ -z $patronID ]]; then
       echo -e "\nInvalid input. Patron ID cannot be EMPTY!\n"
-    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
-      echo -e "\nInvalid input. Patron ID must be FOUR or SEVEN digits!\n"
+    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{2}[A-Z]{3}[0-9]{5}$ ]]; then
+      echo -e "\nInvalid input. Please enter the Patron ID in the correct FORMAT"
+      echo -e "[FORMAT 1]: XXXX\t[4 digits]"
+      echo -e "[FORMAT 2]: XXAAAXXXXX\t[2 digits + 3 uppercase alphabets + 5 digits]\n"
     elif [[ -n $result ]]; then # No duplicate of data (Patron ID) is allowed
       echo -e "\nInvalid input. Patron ID entered was found in database, NO DUPLICATION of Patron ID is allowed!\n"
     else
@@ -211,8 +214,10 @@ IdentifyPatron() {
 
     if [[ -z $patronID ]]; then
       echo -e "\nInvalid input. Patron ID cannot be EMPTY!\n"
-    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{7}$ ]]; then
-      echo -e "\nInvalid input. Patron ID must be FOUR or SEVEN digits!\n"
+    elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{2}[A-Z]{3}[0-9]{5}$ ]]; then
+      echo -e "\nInvalid input. Please enter the Patron ID in the correct FORMAT"
+      echo -e "[FORMAT 1]: XXXX\t[4 digits]"
+      echo -e "[FORMAT 2]: XXAAAXXXXX\t[2 digits + 3 uppercase alphabets + 5 digits]\n"
     else
       break
     fi
@@ -595,7 +600,7 @@ GenerateBookingSlip() {
 
                             Venue Booking Slip
 
-Patron ID: ${patronDetailsBooking[0]}                                   Patron Name: ${patronDetailsBooking[1]}
+Patron ID: ${patronDetailsBooking[0]}                                Patron Name: ${patronDetailsBooking[1]}
 
 Room Number: $1
 

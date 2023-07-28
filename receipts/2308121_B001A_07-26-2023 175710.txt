@@ -1,7 +1,7 @@
 
                             Venue Booking Slip
 
-Patron ID: 2308121                                   Patron Name: Tan Mei Lee
+Patron ID: 23WMR08121                                Patron Name: Tan Mei Lee
 
 Room Number: B001A
 
