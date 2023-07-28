@@ -15,7 +15,7 @@ print_centered() {
   declare -i -r str_len="${#1}"
   [[ $str_len -ge $TERM_COLS ]] && {
     echo "$1"
-    return
+    #return
   }
 
   declare -i filler_len="$(((TERM_COLS - str_len) / 2))"
