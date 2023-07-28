@@ -241,9 +241,9 @@ SearchPatron() {
     read -ra subStrings <<<"$result"
     IFS=$DEFAULT_IFS
 
-    echo -e "Full Name\t[Auto Display]: ${subStrings[0]}"
-    echo -e "Contact Number\t[Auto Display]: ${subStrings[1]}"
-    echo -e "Email Address\t[Auto Display]: ${subStrings[2]}"
+    echo -e "Full Name\t[Auto Display]: ${subStrings[1]}"
+    echo -e "Contact Number\t[Auto Display]: ${subStrings[2]}"
+    echo -e "Email Address\t[Auto Display]: ${subStrings[3]}"
   fi
 
   UserSelection "Search For Another Patron" SearchPatron
