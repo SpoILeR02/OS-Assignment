@@ -5,7 +5,7 @@ Patron ID: 23WMR08121                                Patron Name: Tan Mei Lee
 
 Room Number: B001A
 
-Booking Date: 07/27/2023
+Booking Date: 07/29/2023
 
 Booking From: 14:00                                  Booking Until: 16:00
 
@@ -13,4 +13,4 @@ Booking Purpose: For FYP Presentation
 
     This is a system generated booking slip with no signature required.
 
-                      Printed on 26/07/2023 17:57:10
+                      Printed on 28/07/2023 13:39:34
