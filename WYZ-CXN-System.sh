@@ -1,11 +1,21 @@
 #!/bin/bash
 
-### GLOBAL VARIABLES ###
-declare -r dataPath="$PWD/data_files"
-declare -r receiptsPath="$PWD/receipts"
+# ==============
+# FILE HEADER
+# ==============
+# AUTHOR 1: WONG YAN ZHI
+# AUTHOR 2: CHONG XIN NAN
+# DATE    : WAIT FINALIZATION
+# COURSE  : BACS2093 OPERATING SYSTEM
+# PURPOSE : UNIVERSITY VENUE MANAGEMENT SYSTEM
+# ==============
 
+### GLOBAL VARIABLES ### [-r = readonly]
+declare -r dataPath="$PWD/data_files"   # Define the path to te data_files folder
+declare -r receiptsPath="$PWD/receipts" # Define the path to te receipts folder
 ### GLOBAL ENDS HERE ###
 
+# TODO: Explain the purpose of this formatting function
 ### FORMATTING PURPOSE ###
 print_centered() {
   [[ $# == 0 ]] && return 1
@@ -31,40 +41,83 @@ print_centered() {
   [[ $(((TERM_COLS - str_len) % 2)) -ne 0 ]] && echo -n "${ch}"
   echo
 }
-
 ### FORMATTING ENDS HERE ###
 
-### ENTIRE PROGRAM STARTS HERE ###
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : File Existence Check
+# DESCRIPTION : Check if the file exists, if not then create the file
+# PARAMETER   : $1 = File Name (includes file extension)
+# PURPOSE     : To ensure the file exists so that may perform search & append
+# ==============
 ChkFileExist() {
-  if [ ! -f "$dataPath/$1" ]; then
+  if [ ! -f "$dataPath/$1" ]; then # -f = file exist#
     touch "$dataPath/$1"
   fi
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Write into the File
+# DESCRIPTION : Append/ Write something (content) into a file
+# PARAMETER   : $1 = File Name (includes file extension)
+#               $2 = Content to be appended
+# PURPOSE     : Use echo to insert a single line onto the required file
+# ==============
 AppendToFile() {
   echo "$2" >>"$dataPath/$1"
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Search inside a File
+# DESCRIPTION : Search something (content) from a file
+# PARAMETER   : $1 = File Name (includes file extension)
+#               $2 = keyword to be searched
+# PURPOSE     : Use grep to find matching pattern (entire line) inside a file
+# ==============
 SearchInFile() {
   # result is global variable
-  result=$(grep -w "$2" "$dataPath/$1" | sort) #| cut -d: -f1
+  result=$(grep -w "$2" "$dataPath/$1" | sort) # -w = search by words, sort = sort the searched content
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Ask for User Input
+# DESCRIPTION : Prompt the user to enter input
+# PARAMETER   : $1 = State of program (either running in Main Menu or Other Modules)
+# PURPOSE     : Standardize the input format when ask users to enter options (navigating program)
+#               Make it into function to prevent code duplication/ cluttering (reusable)
+# ==============
 PromptInput() {
-  read -rp "Please Enter Your Option: " userOption
+  # -r = read raw input, -p = PROMPT without \n before attempting to read
+  read -rp "Please Enter Your Option: " userOption # Stored input into global variable 'userOption'
 
-  if [ "$1" != "others" ]; then
-    local validInputs=("A" "B" "C" "D" "E" "Q")
+  # if-else statement to check the state of the program
+  if [ "$1" != "others" ]; then                 # if the program is running main menu
+    local validInputs=("A" "B" "C" "D" "E" "Q") # local variable for validate input purpose
     # Convert to Uppercase using ^^, if require Lowercase use ,,
-    while [[ ! "${validInputs[*]}" =~ (^| )"${userOption^^}"($| ) ]]; do
+    # Check if the input is equal to any element in the validInputs array
+    while [[ ! "${validInputs[*]}" =~ ${userOption^^} ]]; do
+      # If does not fulfill requirement, then prompt user to enter again
       echo -e "\nInvalid Option. Enter Only Single Character - [A], [B], [C], [D], [E] OR [Q]!"
       echo -e "Please Try Again!\n"
       read -rp "Please Enter Your Option: " userOption
     done
 
-  else
+  else # if the program is running other modules
     # Convert to Uppercase using ^^, if require Lowercase use ,,
+    # Check if the input is equal to Y or N
     while [ "${userOption^^}" != "Y" ] && [ "${userOption^^}" != "N" ]; do
+      # If does not fulfill requirement, then prompt user to enter again
       echo -e "\nInvalid Option. Enter Only Single Character - [Y] or [N]!"
       echo -e "Please Try Again!\n"
       read -rp "Please Enter Your Option: " userOption
@@ -72,6 +125,16 @@ PromptInput() {
   fi
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Print the program header
+# DESCRIPTION : Print the program header, centered it by using print_centered function
+# PARAMETER   : $1 = Module Name
+# PURPOSE     : To be called by each module, to print the header
+#               Make it into function to prevent code duplication/ cluttering (reusable)
+# ==============
 ProgramHeader() {
   print_centered "=" "="
   print_centered "University Venue Management System"
