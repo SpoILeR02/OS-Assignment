@@ -15,7 +15,6 @@ declare -r dataPath="$PWD/data_files"   # Define the path to te data_files folde
 declare -r receiptsPath="$PWD/receipts" # Define the path to te receipts folder
 ### GLOBAL ENDS HERE ###
 
-# TODO: Explain the purpose of this formatting function
 ### FORMATTING PURPOSE ###
 print_centered() {
   [[ $# == 0 ]] && return 1
