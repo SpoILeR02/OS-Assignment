@@ -359,7 +359,6 @@ IdentifyPatron() {
 # TASK        : Search Patron
 # DESCRIPTION : To call IdentifyPatron function, then display the patron details if found
 # PURPOSE     : Display the petron details if found, else display "No Record Found!"
-#               Make it into function to prevent code duplication/ cluttering (reusable)
 SearchPatron() {
   # local variable used to store substring of the found line
   local subStrings
@@ -572,8 +571,17 @@ ListVenue() {
   UserSelection "Search For Another Block Venue" ListVenue
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Patron Validation
+# DESCRIPTION : To verify is the user is a valid patron before allows booking
+# PURPOSE     : Display the name if found and allow proceed to next section (booking),
+#               else display "Patron ID is not found"
 PatronValidation() {
-  # patronDetailsBooking is global variable
+  # 'patronDetailsBooking' is global variable
+  # 'subStrings' is local variable
   local subStrings
 
   IdentifyPatron "Patron Details Validation"
@@ -592,7 +600,16 @@ PatronValidation() {
   fi
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Book Venue
+# DESCRIPTION : Allow user to book a venue after passes patron validation
+# PURPOSE     : This entire function is all about booking a venue
+#               It contains code segment which validate the user inputs as well
 BookVenue() {
+  # local variables for storing user inputs & calculation purpose
   local roomNumber
   local roomStatus
   local bookingDate
@@ -601,6 +618,8 @@ BookVenue() {
   local bookingPurpose
   local calcStartMinutes
   local calcEndMinutes
+  # Booking venue will be using data in 2 different files
+  # Therefore, both venue and booking txt files shall be checked if exist
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
 
@@ -625,6 +644,7 @@ BookVenue() {
   echo # Blank Line, \n
   print_centered "-" "-"
 
+  # Seach for the specific venue
   SearchInFile "venue.txt" "^[^;]*;$roomNumber"
 
   if [ -z "$result" ]; then
@@ -635,10 +655,12 @@ BookVenue() {
     read -ra subStrings <<<"$result"
     IFS=$DEFAULT_IFS
 
+    # Display the venue details
     echo -e "Room Type\t[Auto Display]: ${subStrings[2]}"
     echo -e "Capacity\t[Auto Display]: ${subStrings[3]}"
     echo -e "Remarks\t\t[Auto Display]: ${subStrings[4]}"
 
+    # Check if the venue is booked, if yes then show UNAVAILABLE
     if [[ "$OSTYPE" == "darwin"* ]]; then
       # macOS
       SearchInFile "booking.txt" "^[^;]*;[^;]*;$roomNumber;$(date -v+1d '+%m/%d/%Y')"
@@ -661,12 +683,14 @@ BookVenue() {
 
     echo -e "Status\t\t[Auto Display]: $roomStatus"
 
+    # If room status is unavailable, show the apprioriate output, tell the user venue is booked
     if [[ $roomStatus == "Unavailable" ]]; then
       echo # Blank Line, \n
       print_centered "-" "-"
       echo "Unfortunately, the venue [$roomNumber] has been booked for tomorrow."
       echo "Please select another venue."
       UserSelection "Retry Booking" BookVenue
+    # Otherwise, proceed to booking
     else
       echo # Blank Line, \n
       print_centered "-" "-"
@@ -687,9 +711,9 @@ BookVenue() {
         elif [[ ! $bookingDate =~ ^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$ ]]; then
           echo -e "\nInvalid input. Please enter the Booking Date in the correct FORMAT."
           echo -e "[FORMAT]: MM/DD/YYYY, i.e 06/29/2023\n"
-        # Instead of using [date -d] which works for GNU/Linux Systems,
-        # Consider using [date -j] (BSD) which works for macOS and Linux Systems.
         else
+          # [date -d] works for GNU/Linux Systems,
+          # [date -j] (BSD) works for macOS (darwin).
           if [[ "$OSTYPE" == "darwin"* ]]; then
             # macOS
             if [[ "$(date -j -f '%m/%d/%Y' "$bookingDate" '+%m/%d/%Y')" < "$(date -v+1d '+%m/%d/%Y')" ]]; then
@@ -718,8 +742,14 @@ BookVenue() {
           echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
           echo -e "[FORMAT]: HH:MM, i.e 14:00\n"
         elif [[ $bookingTimeFrom < "08:00" || $bookingTimeFrom > "19:30" ]]; then
+          # The reason to put 730pm is to reserve a 30 minutes of booking time
           echo -e "\nInvalid input. Booking Time From can only in between 0800hrs (8.00am) to 1930hrs (7.30pm)!\n"
         else
+          # tr -d ':' = delete all the colons in the string
+          # $() that covers the tr command = execute in sub shell
+          # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
+          #       Ensure the number is treated as decimal even it gas leading zero
+          # $(()) = treat as arithmetic expression
           calcStartMinutes=$((10#$(tr -d ':' <<<"$bookingTimeFrom")))
           break
         fi
@@ -738,7 +768,13 @@ BookVenue() {
         elif [[ $bookingTimeTo < $bookingTimeFrom ]]; then
           echo -e "\nInvalid input. Booking Time Until cannot be earlier than Booking Time From!\n"
         else
+          # tr -d ':' = delete all the colons in the string
+          # $() that covers the tr command = execute in sub shell
+          # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
+          #       Ensure the number is treated as decimal even it gas leading zero
+          # $(()) = treat as arithmetic expression
           calcEndMinutes=$((10#$(tr -d ':' <<<"$bookingTimeTo")))
+          # Check if the booking duration is at least 30 minutes
           if [[ $((calcEndMinutes - calcStartMinutes)) -lt 30 ]]; then
             echo -e "\nInvalid input. A booking must be at least 30 minutes!\n"
           else
@@ -746,7 +782,7 @@ BookVenue() {
           fi
         fi
       done
-
+      # Booking purpose is just a side note, therefore no validation needed
       read -rp $'Booking Purpose\t\t\t\t: ' bookingPurpose
 
       UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip" "$roomNumber" "$bookingDate" "$bookingTimeFrom" "$bookingTimeTo" "$bookingPurpose"
@@ -754,16 +790,36 @@ BookVenue() {
   fi
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Generate Booking Slip (Receipt)
+# DESCRIPTION : Generate the booking slip once the user decided to save the booking
+# PARAMETER   : Explained in-line
+# PURPOSE     : To generate a booking slip and store it in local storage
+#               To print out the booking slip on screen to the user
 GenerateBookingSlip() {
+  # local variables
   local currentDateTime
   local combinedString
   local generatedReceiptFile
 
+  # 'currentDateTime' store the current date and time, in the format of DD/MM/YYYY HH:MM:SS
   currentDateTime=$(date "+%d/%m/%Y %H:%M:%S")
+  # 'combinedString' store the combined string, which later will be appended into booking.txt
+  # patronDetailsBooking[0] = Patron ID, patronDetailsBooking[1] = Patron Name
+  # $1 = Room Number, $2 = Booking Date, $3 = Booking From, $4 = Booking Until, $5 = Booking Purpose
   combinedString="${patronDetailsBooking[0]};${patronDetailsBooking[1]};$1;$2;$3;$4;$5"
+  # 'generatedReceiptFile' store the path of the generated receipt file
+  # The file name is in the format of PatronID_RoomNumber_currentDay currenTime.txt
+  # Example[1]: 8121_B001A_07-28-2023 133934
+  # Example[2]: 23WMR08121_B001A_07-28-2023 133934
+  # 133934 = 13:39:34, 24 hours format (HHMMSS)
   generatedReceiptFile="$receiptsPath/${patronDetailsBooking[0]}_${1}_$(date "+%m-%d-%Y %H%M%S").txt"
+  # Call the function to append the combined string into booking.txt
   AppendToFile "booking.txt" "$combinedString"
-
+  # Use cat to write multiple lines into the txt file
   cat >>"$generatedReceiptFile" <<EOF
 
                             Venue Booking Slip
@@ -784,11 +840,18 @@ Booking Purpose: $5
 EOF
 
   ProgramHeader "Generated Booking Slip"
-  cat "$generatedReceiptFile"
+  cat "$generatedReceiptFile" # Use cat to print out the content of the txt file
 
   UserSelection "Register For Another Booking" MainMenu
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Main Menu
+# DESCRIPTION : Main Menu of the program
+# PURPOSE     : Used to display the main menu of the program
 MainMenu() {
   ProgramHeader "Main Menu"
 
@@ -804,9 +867,9 @@ MainMenu() {
 
   ProgramFooter
 
-  PromptInput "main"
+  PromptInput "main" # Call PromptInput function, pass in "main" as string parameter
   # Convert to Uppercase using ^^, if require Lowercase use ,,
-  case "${userOption^^}" in
+  case "${userOption^^}" in # Check the value of userOption variable using switch-case
   [A])
     clear
     RegisterPatron
@@ -840,16 +903,25 @@ MainMenu() {
   esac
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Start Program
+# DESCRIPTION : The first code segment to be run when the program is executed
+# PURPOSE     : To setup the folder structure, then call MainMenu function
 StartProgram() {
   # DEFAULT_IFS is global variable
-  clear
-  DEFAULT_IFS=$IFS
+  clear            # clear is used to flush up the terminal screen
+  DEFAULT_IFS=$IFS # The default IFS is Space, Tab & New Line
 
-  if [ ! -d "$dataPath" ]; then
+  if [ ! -d "$dataPath" ]; then # Check if the data folder is exist
+    # if it is not, then create these folder
     mkdir "$dataPath"
     mkdir "$receiptsPath"
     MainMenu
   else
+    # Otherwise, run Main Menu directly
     MainMenu
   fi
 }
