@@ -143,6 +143,15 @@ ProgramHeader() {
   print_centered "-" "-"
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Print the program footer
+# DESCRIPTION : Print the program footer, centered it by using print_centered function
+# PURPOSE     : To be called by each module, to print the footer
+#               Make it into function to prevent code duplication/ cluttering (reusable)
+# ==============
 ProgramFooter() {
   print_centered "-" "-"
   print_centered "System Made by WongYanZhi & ChongXinNan | 2023 - RST3S1G1"
@@ -150,6 +159,16 @@ ProgramFooter() {
   echo # Blank Line, \n
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Exit the Program
+# DESCRIPTION : To be called if the user chose to exit the program in Main Menu
+# PURPOSE     : Print some messages to the users, then exit the program
+#               Write this as a function to makes things standardize
+#               (Main Menu will just be in charged of calling different functions)
+# ==============
 ExitProgram() {
   ProgramHeader "Exit Program"
 
@@ -159,8 +178,21 @@ ExitProgram() {
   echo # Blank Line, \n
 
   ProgramFooter
+
+  exit 0 # Yay Exit the Program!
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : User Selection [Y] or [N]
+# DESCRIPTION : Print necessary information before calling PromptInput function
+# PARAMETER   : $1 = Module Name
+#               $2 = Function Name
+# PURPOSE     : To be called by all modules other than Main Menu
+#               This is used to check if user want to continue the same module or back to Main Menu
+#               Make it into function to prevent code duplication/ cluttering (reusable)
 UserSelection() {
   echo # Blank Line, \n
   print_centered "-" "-"
@@ -169,33 +201,45 @@ UserSelection() {
 
   ProgramFooter
 
+  # Call PromptInput function, pass in "others" as string parameter
   PromptInput "others"
-  if [ "${userOption^^}" == "Y" ]; then
-    clear
-    $2 "${@:3}"
-  else
-    clear
-    MainMenu
+  # if-else statement to check if users want to continue the same module
+  if [ "${userOption^^}" == "Y" ]; then # if user chose Y = want continue
+    clear                               # Clear the screen
+    $2 "${@:3}"                         # Call the function, pass in the rest of the parameters if exists
+  else                                  # if user chose N = want back to Main Menu
+    clear                               # Clear the screen
+    MainMenu                            # Call MainMenu function
   fi
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : CHONG XIN NAN
+# TASK        : Register Patron
+# DESCRIPTION : Used to register a new patron into the system
+# PURPOSE     : This entire function is all about registering a new patron
+#               It contains code segment which validate the user inputs as well
 RegisterPatron() {
+  # local variables for storing user inputs
   local patronID
   local patronName
   local patronContact
   local patronEmail
-  ChkFileExist "patron.txt"
+  ChkFileExist "patron.txt" # Call the function to check if "patron.txt" is exist
 
   ProgramHeader "Patron Registration"
 
   print_centered "Please Enter Patron's Detail According to the Format Below"
   echo # Blank Line, \n
 
-  # Ensure only 4 or 7 digits are entered as input
-  while true; do
-    read -rp $'Patron ID [As per TAR UMT Format]\t: ' patronID
-    SearchInFile "patron.txt" "^$patronID" # Search the entered patronID
+  # Ensure user input match the format/ pattern
+  while true; do                                               # Loop until the user input is valid
+    read -rp $'Patron ID [As per TAR UMT Format]\t: ' patronID # read user input and store into patronID variable
+    SearchInFile "patron.txt" "^$patronID"                     # Search the entered patronID
 
+    # -e of echo is to enable interpretation of backslash escapes
     if [[ -z $patronID ]]; then
       echo -e "\nInvalid input. Patron ID cannot be EMPTY!\n"
     elif [[ ! $patronID =~ ^[0-9]{4}$ && ! $patronID =~ ^[0-9]{2}[A-Z]{3}[0-9]{5}$ ]]; then
@@ -259,15 +303,28 @@ RegisterPatron() {
     fi
   done
 
+  # local variable to store the combined string
   local combinedString
-  combinedString="$patronID;$patronName;$patronContact;$patronEmail"
-  AppendToFile "patron.txt" "$combinedString"
+  combinedString="$patronID;$patronName;$patronContact;$patronEmail" # each substring is separated by a semicolon
+  AppendToFile "patron.txt" "$combinedString"                        # Call the function to append the combined string into "patron.txt"
 
   UserSelection "Register For New Patron" RegisterPatron
 }
 
-# A Function to be used in SearchPatron & PatronValidation
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
+# TASK        : Identify Patron
+# DESCRIPTION : To be called by SearchPatron & PatronValidation
+# PARAMETER   : $1 = Module Name
+# PURPOSE     : Prompt the user to enter Patron ID, then search if the Patron ID exist in the database
+#               It contains code segment which validate the user inputs as well
+#               Make it into function to prevent code duplication/ cluttering (reusable)
 IdentifyPatron() {
+  # local variable for storing user input
+  # Ensure user input match the format/ pattern
   local patronID
   ChkFileExist "patron.txt"
 
@@ -295,17 +352,25 @@ IdentifyPatron() {
   SearchInFile "patron.txt" "^$patronID"
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : CHONG XIN NAN
+# TASK        : Search Patron
+# DESCRIPTION : To call IdentifyPatron function, then display the patron details if found
+# PURPOSE     : Display the petron details if found, else display "No Record Found!"
+#               Make it into function to prevent code duplication/ cluttering (reusable)
 SearchPatron() {
+  # local variable used to store substring of the found line
   local subStrings
-
   IdentifyPatron "Search Patron Details"
 
   if [ -z "$result" ]; then
     echo "No Record Found!"
   else
-    IFS=";"
-    read -ra subStrings <<<"$result"
-    IFS=$DEFAULT_IFS
+    IFS=";"                          # Internal Field Separator, the system skips the specified delimiter when reading the string
+    read -ra subStrings <<<"$result" # Read as raw input, and store into an array
+    IFS=$DEFAULT_IFS                 # Default is Space, Tab & New Line
 
     echo -e "Full Name\t[Auto Display]: ${subStrings[1]}"
     echo -e "Contact Number\t[Auto Display]: ${subStrings[2]}"
@@ -315,7 +380,16 @@ SearchPatron() {
   UserSelection "Search For Another Patron" SearchPatron
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Add New Venue
+# DESCRIPTION : To create a new venue into the system
+# PURPOSE     : This entire function is about adding a new venue
+#               It contains code segment which validate the user inputs as well
 AddVenue() {
+  # local variables for storing user inputs
   local blockName
   local roomNumber
   local roomType
@@ -344,6 +418,8 @@ AddVenue() {
   # Ensure the room number starts with the block name, and only accept maximum 4 alphanumeric characters
   while true; do
     read -rp $'Room Number\t: ' roomNumber
+    # Since the room number is stored as 2nd column in txt file, therefore we modify the search pattern as follows
+    # ^ = start of line, [^;] = any character except semicolon, * = more occurrence, ; = semicolon
     SearchInFile "venue.txt" "^[^;]*;$roomNumber"
 
     if [[ -z $roomNumber ]]; then
@@ -383,7 +459,9 @@ AddVenue() {
     fi
   done
 
+  # Room remarks is just a side note, therefore no validation needed
   read -rp $'Room Remarks\t: ' roomRemarks
+  # Room status for a newly created venue shall be Available
   echo -e "Room Status\t: Available (Default)"
 
   local combinedString
@@ -393,11 +471,23 @@ AddVenue() {
   UserSelection "Add Another New Venue" AddVenue
 }
 
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : List Venue
+# DESCRIPTION : Used to list down all the venue details and info which belongs to a specific block
+# PARAMETER   : $1 = Module Name
+# PURPOSE     : Prompt the user to enter block name, then search in venue txt file to show all the venues
+#               It contains code segment which validate the user inputs as well
 ListVenue() {
+  # local variables for storing user inputs
   local blockName
   local venueArray
   local roomStatus
   local subStrings
+  # Listing venue will be using data in 2 different files
+  # Therefore, both venue and booking txt files shall be checked if exist
   ChkFileExist "venue.txt"
   ChkFileExist "booking.txt"
 
@@ -425,24 +515,36 @@ ListVenue() {
   if [ -z "$result" ]; then
     echo "No Record Found!"
   else
+    # All venue with identical Block Name is stored in Results
     echo -e "Room Number\tRoom Type\t\tCapacity\tRemarks\t\t\t\tStatus"
     print_centered "-" "-"
     readarray -t venueArray <<<"$result"
 
     # Check if the venue is booked, if yes then show UNAVAILABLE
     IFS=";"
+    # Loop through the array (which would contain multiple lines)
     for line in "${venueArray[@]}"; do
+      # Store the contents of a single line into an array
       read -ra subStrings <<<"$line"
-
+      # Loop through the array (which contains multiple substrings)
       for index in "${!subStrings[@]}"; do
         if [ "$index" = 0 ]; then # Don't display Block Name
           continue
         fi
-        echo -ne "${subStrings[index]}\t\t"
+        echo -ne "${subStrings[index]}\t\t" # -n = print without \n, -e = enable interpretation of backslash escapes
       done
 
+      # Check if the venue is booked, if yes then show UNAVAILABLE
+      # OS depentent, macOS = darwin and linux = linux-gnu
+      # The reason to do so is because both system uses different 'date' system
       if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
+        # Since the room number is stored as 3rd column in txt file, therefore we modify the search pattern as follows
+        # ^ = start of line, [^;] = any character except semicolon, * = more occurrence, ; = semicolon
+        # We know that the subString[1] contains room number, therefore we utilize it to search
+        # If the room number fits into the search pattern, it then verify if the booking date is tommorow
+        # If it is, that would mean the booking has already been done, and the room is now unavailable
+        # Store appropriate room status then display it
         SearchInFile "booking.txt" "^[^;]*;[^;]*;${subStrings[1]};$(date -v+1d '+%m/%d/%Y')"
 
         if [ -z "$result" ]; then
@@ -733,7 +835,6 @@ MainMenu() {
   [Q])
     clear
     ExitProgram
-    exit 0
     ;;
 
   esac
