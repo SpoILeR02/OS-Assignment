@@ -911,7 +911,10 @@ MainMenu() {
 # PURPOSE     : To setup the folder structure, then call MainMenu function
 StartProgram() {
   # DEFAULT_IFS is global variable
-  clear            # clear is used to flush up the terminal screen
+  clear        # clear is used to flush up the terminal screen
+  tput setab 7 # Set background color to white
+  tput setaf 0 # Set font color to black
+
   DEFAULT_IFS=$IFS # The default IFS is Space, Tab & New Line
 
   if [ ! -d "$dataPath" ]; then # Check if the data folder is exist

@@ -1,2 +1,4 @@
 23WMR08121;Tan Mei Lee;012-9999999;tanml-wp23@student.tarc.edu.my
 23FFP09999;Kang King Kong;012-5555555;kangkk-wp23@student.tarc.edu.my
+4321;Dr Chong Xin nan;011-22223333;chongxn@tarc.edu.my
+21WMR03679;Wong Yan Zhi;012-3335555;wongyz-pp20@student.tarc.edu.my

@@ -5,3 +5,5 @@ A;A001F;Tutorial;30;asd
 A;A001B;Tutorial;25;fsda
 A;A001C;Tutorial;28;GDafsdg
 A;A001G;Tutorial;1234;asdf
+D;D001A;Computer Lab;30;For Practical Use Only
+SG;SG005;Lecture Hall;400;For Lecture Use Only

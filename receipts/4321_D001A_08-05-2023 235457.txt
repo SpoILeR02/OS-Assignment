@@ -1,0 +1,16 @@
+
+                            Venue Booking Slip
+
+Patron ID: 4321                                Patron Name: Dr Chong Xin nan
+
+Room Number: D001A
+
+Booking Date: 08/06/2023
+
+Booking From: 14:00                                  Booking Until: 16:00
+
+Booking Purpose: For FYP Presentation
+
+    This is a system generated booking slip with no signature required.
+
+                      Printed on 05/08/2023 23:54:57
