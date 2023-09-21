@@ -5,7 +5,7 @@
 # ==============
 # AUTHOR 1: WONG YAN ZHI
 # AUTHOR 2: CHONG XIN NAN
-# DATE    : WAIT FINALIZATION
+# DATE    : 22/09/2023
 # COURSE  : BACS2093 OPERATING SYSTEM
 # PURPOSE : UNIVERSITY VENUE MANAGEMENT SYSTEM
 # ==============
@@ -128,6 +128,7 @@ PromptInput() {
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
 # TASK        : Print the program header
 # DESCRIPTION : Print the program header, centered it by using print_centered function
 # PARAMETER   : $1 = Module Name
@@ -146,6 +147,7 @@ ProgramHeader() {
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
 # TASK        : Print the program footer
 # DESCRIPTION : Print the program footer, centered it by using print_centered function
 # PURPOSE     : To be called by each module, to print the footer
@@ -162,6 +164,7 @@ ProgramFooter() {
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
 # TASK        : Exit the Program
 # DESCRIPTION : To be called if the user chose to exit the program in Main Menu
 # PURPOSE     : Print some messages to the users, then exit the program
@@ -603,6 +606,75 @@ PatronValidation() {
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# TASK        : Extract Booking Time
+# DESCRIPTION : The system shall extract the booking time from the search result found from booking.txt
+# PURPOSE     : Store the booking time into 2 different arrays, one for Booking From and another for Booking Until
+#               Each element was sparated by a semicolon (;)
+ExtractBookingTime() {
+  chkBookingTimeFromArray=()
+  chkBookingTimeUntilArray=()
+
+  while read -r line; do
+    # Use awk to extract Booking From (field 5) and Booking Until (field 6) based on the delimiter ';'
+    chkBookingTimeFrom=$(awk -F';' '{print $5}' <<<"$line")
+    chkBookingTimeUntil=$(awk -F';' '{print $6}' <<<"$line")
+
+    # Add Booking From and Booking Until to their respective arrays
+    chkBookingTimeFromArray+=("$chkBookingTimeFrom")
+    chkBookingTimeUntilArray+=("$chkBookingTimeUntil")
+  done <<<"$result"
+}
+
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
+# TASK        : Check Available For Booking (Ensure no conflict with other booking time)
+# DESCRIPTION : The system shall check if the venue is available for booking
+# PURPOSE     : Check user input time, then compare with the existing booking time
+#               If the user input time is within the existing booking time, then it is invalid
+CheckAvailableForBooking() {
+  for element in "${!chkBookingTimeFromArray[@]}"; do
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      if [ "$2" == true ]; then
+        if [[ ! $1 < $(date -j -v-30M -f "%H:%M" "${chkBookingTimeFromArray[element]}" +%H:%M) && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
+          invalidBookingFlags=true
+          break
+        else
+          invalidBookingFlags=false
+        fi
+      else
+        if [[ ! $1 < "${chkBookingTimeFromArray[element]}" && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
+          invalidBookingFlags=true
+          break
+        else
+          invalidBookingFlags=false
+        fi
+      fi
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+      if [ "$2" == true ]; then
+        if [[ ! $1 < $(date -d "${chkBookingTimeFromArray[element]} - 30 minutes" +%H:%M) && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
+          invalidBookingFlags=true
+          break
+        else
+          invalidBookingFlags=false
+        fi
+      else
+        if [[ ! $1 < "${chkBookingTimeFromArray[element]}" && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
+          invalidBookingFlags=true
+          break
+        else
+          invalidBookingFlags=false
+        fi
+      fi
+    fi
+  done
+}
+
+# ==============
+# TASK HEADER
+# ==============
+# AUTHOR 1    : WONG YAN ZHI
 # TASK        : Book Venue
 # DESCRIPTION : Allow user to book a venue after passes patron validation
 # PURPOSE     : This entire function is all about booking a venue
@@ -667,7 +739,8 @@ BookVenue() {
       if [ -z "$result" ]; then
         roomStatus="Available"
       else
-        roomStatus="Unavailable"
+        roomStatus="Unavailable From"
+        ExtractBookingTime
       fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       # GNU/Linux
@@ -676,116 +749,119 @@ BookVenue() {
       if [ -z "$result" ]; then
         roomStatus="Available"
       else
-        roomStatus="Unavailable"
+        roomStatus="Unavailable From"
+        ExtractBookingTime
       fi
     fi
 
     echo -e "Status\t\t[Auto Display]: $roomStatus"
+    for index in "${!chkBookingTimeFromArray[@]}"; do
+      echo -ne "\t\t\t\t${chkBookingTimeFromArray[index]}" # -n = print without \n, -e = enable interpretation of backslash escapes
+      echo " - ${chkBookingTimeUntilArray[index]}"
+    done
 
-    # If room status is unavailable, show the apprioriate output, tell the user venue is booked
-    if [[ $roomStatus == "Unavailable" ]]; then
-      echo # Blank Line, \n
-      print_centered "-" "-"
-      echo "Unfortunately, the venue [$roomNumber] has been booked for tomorrow."
-      echo "Please select another venue."
-      UserSelection "Retry Booking" BookVenue
-    # Otherwise, proceed to booking
-    else
-      echo # Blank Line, \n
-      print_centered "-" "-"
-      echo -e "Notes:\tThe booking hours shall be from 0800hrs (8.00am) to 2000hrs (8.00pm) only."
-      echo -e "\tThe booking duration shall be at least 30 minutes per booking."
+    echo # Blank Line, \n
+    print_centered "-" "-"
+    echo -e "Notes:\tThe booking hours shall be from 0800hrs (8.00am) to 2000hrs (8.00pm) only."
+    echo -e "\tThe booking duration shall be at least 30 minutes per booking."
 
-      echo # Blank Line, \n
-      print_centered "-" "-"
-      print_centered "Please Enter Booking Details According to the Format Below"
-      echo # Blank Line, \n
+    echo # Blank Line, \n
+    print_centered "-" "-"
+    print_centered "Please Enter Booking Details According to the Format Below"
+    echo # Blank Line, \n
 
-      # Validate Data, ensure the date is in the correct format & is tomorrow
-      while true; do
-        read -rp $'Booking Date\t\t[MM/DD/YYYY]\t: ' bookingDate
+    # Validate Data, ensure the date is in the correct format & is tomorrow
+    while true; do
+      read -rp $'Booking Date\t\t[MM/DD/YYYY]\t: ' bookingDate
 
-        if [[ -z $bookingDate ]]; then
-          echo -e "\nInvalid input. Booking Date cannot be EMPTY!\n"
-        elif [[ ! $bookingDate =~ ^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$ ]]; then
-          echo -e "\nInvalid input. Please enter the Booking Date in the correct FORMAT."
-          echo -e "[FORMAT]: MM/DD/YYYY, i.e 06/29/2023\n"
-        else
-          # [date -d] works for GNU/Linux Systems,
-          # [date -j] (BSD) works for macOS (darwin).
-          if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS
-            if [[ "$(date -j -f '%m/%d/%Y' "$bookingDate" '+%m/%d/%Y')" < "$(date -v+1d '+%m/%d/%Y')" ]]; then
-              echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
-            else
-              break
-            fi
-          elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            # GNU/Linux
-            if [[ "$(date -d "$bookingDate" '+%m/%d/%Y')" < "$(date -d "tomorrow" '+%m/%d/%Y')" ]]; then
-              echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
-            else
-              break
-            fi
+      if [[ -z $bookingDate ]]; then
+        echo -e "\nInvalid input. Booking Date cannot be EMPTY!\n"
+      elif [[ ! $bookingDate =~ ^[0-1][0-9]/[0-3][0-9]/[0-9]{4}$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Date in the correct FORMAT."
+        echo -e "[FORMAT]: MM/DD/YYYY, i.e 06/29/2023\n"
+      else
+        # [date -d] works for GNU/Linux Systems,
+        # [date -j] (BSD) works for macOS (darwin).
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          # macOS
+          if [[ "$(date -j -f '%m/%d/%Y' "$bookingDate" '+%m/%d/%Y')" < "$(date -v+1d '+%m/%d/%Y')" ]]; then
+            echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
+          else
+            break
           fi
-        fi
-      done
-
-      # Validate Data, ensure the time is in the correct format & is within the range
-      while true; do
-        read -rp $'Booking From\t\t[HH:MM]\t\t: ' bookingTimeFrom
-
-        if [[ -z $bookingTimeFrom ]]; then
-          echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
-        elif [[ ! $bookingTimeFrom =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
-          echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
-          echo -e "[FORMAT]: HH:MM, i.e 14:00\n"
-        elif [[ $bookingTimeFrom < "08:00" || $bookingTimeFrom > "19:30" ]]; then
-          # The reason to put 730pm is to reserve a 30 minutes of booking time
-          echo -e "\nInvalid input. Booking Time From can only in between 0800hrs (8.00am) to 1930hrs (7.30pm)!\n"
-        else
-          # tr -d ':' = delete all the colons in the string
-          # $() that covers the tr command = execute in sub shell
-          # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
-          #       Ensure the number is treated as decimal even it gas leading zero
-          # $(()) = treat as arithmetic expression
-          calcStartMinutes=$((10#$(tr -d ':' <<<"$bookingTimeFrom")))
-          break
-        fi
-      done
-
-      while true; do
-        read -rp $'Booking Until\t\t[HH:MM]\t\t: ' bookingTimeTo
-
-        if [[ -z $bookingTimeTo ]]; then
-          echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
-        elif [[ ! $bookingTimeTo =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
-          echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
-          echo -e "[FORMAT]: HH:MM, i.e 15:30\n"
-        elif [[ $bookingTimeTo < "08:30" || $bookingTimeTo > "20:00" ]]; then
-          echo -e "\nInvalid input. Booking Time Until can only in between 0830hrs (8.30am) to 2000hrs (8.00pm)!\n"
-        elif [[ $bookingTimeTo < $bookingTimeFrom ]]; then
-          echo -e "\nInvalid input. Booking Time Until cannot be earlier than Booking Time From!\n"
-        else
-          # tr -d ':' = delete all the colons in the string
-          # $() that covers the tr command = execute in sub shell
-          # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
-          #       Ensure the number is treated as decimal even it gas leading zero
-          # $(()) = treat as arithmetic expression
-          calcEndMinutes=$((10#$(tr -d ':' <<<"$bookingTimeTo")))
-          # Check if the booking duration is at least 30 minutes
-          if [[ $((calcEndMinutes - calcStartMinutes)) -lt 30 ]]; then
-            echo -e "\nInvalid input. A booking must be at least 30 minutes!\n"
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          # GNU/Linux
+          if [[ "$(date -d "$bookingDate" '+%m/%d/%Y')" < "$(date -d "tomorrow" '+%m/%d/%Y')" ]]; then
+            echo -e "\nInvalid input. Booking Date can only be TOMORROW!\n"
           else
             break
           fi
         fi
-      done
-      # Booking purpose is just a side note, therefore no validation needed
-      read -rp $'Booking Purpose\t\t\t\t: ' bookingPurpose
+      fi
+    done
 
-      UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip" "$roomNumber" "$bookingDate" "$bookingTimeFrom" "$bookingTimeTo" "$bookingPurpose"
-    fi
+    # Validate Data, ensure the time is in the correct format & is within the range
+    while true; do
+      read -rp $'Booking From\t\t[HH:MM]\t\t: ' bookingTimeFrom
+      CheckAvailableForBooking "$bookingTimeFrom" true
+
+      if [[ -z $bookingTimeFrom ]]; then
+        echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
+      elif [[ ! $bookingTimeFrom =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
+        echo -e "[FORMAT]: HH:MM, i.e 14:00\n"
+      elif [[ $invalidBookingFlags = true ]]; then
+        echo -e "\nInvalid input. The booking time entered is either already booked, or conflict with other booking time!"
+        echo -e "Please recheck the timeslot, and select another time.\n"
+      elif [[ $bookingTimeFrom < "08:00" || $bookingTimeFrom > "19:30" ]]; then
+        # The reason to put 730pm is to reserve a 30 minutes of booking time
+        echo -e "\nInvalid input. Booking Time From can only in between 0800hrs (8.00am) to 1930hrs (7.30pm)!\n"
+      else
+        # tr -d ':' = delete all the colons in the string
+        # $() that covers the tr command = execute in sub shell
+        # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
+        #       Ensure the number is treated as decimal even it gas leading zero
+        # $(()) = treat as arithmetic expression
+        calcStartMinutes=$((10#$(tr -d ':' <<<"$bookingTimeFrom")))
+        break
+      fi
+    done
+
+    while true; do
+      read -rp $'Booking Until\t\t[HH:MM]\t\t: ' bookingTimeTo
+      CheckAvailableForBooking "$bookingTimeTo" false
+
+      if [[ -z $bookingTimeTo ]]; then
+        echo -e "\nInvalid input. Booking Time From cannot be EMPTY!\n"
+      elif [[ ! $bookingTimeTo =~ ^[0-9]{2}:[0-5][0-9]$ ]]; then
+        echo -e "\nInvalid input. Please enter the Booking Time From in the correct FORMAT."
+        echo -e "[FORMAT]: HH:MM, i.e 15:30\n"
+      elif [[ $invalidBookingFlags = true ]]; then
+        echo -e "\nInvalid input. The booking time entered is either already booked, or conflict with other booking time!"
+        echo -e "Please recheck the timeslot, and select another time.\n"
+      elif [[ $bookingTimeTo < "08:30" || $bookingTimeTo > "20:00" ]]; then
+        echo -e "\nInvalid input. Booking Time Until can only in between 0830hrs (8.30am) to 2000hrs (8.00pm)!\n"
+      elif [[ $bookingTimeTo < $bookingTimeFrom ]]; then
+        echo -e "\nInvalid input. Booking Time Until cannot be earlier than Booking Time From!\n"
+      else
+        # tr -d ':' = delete all the colons in the string
+        # $() that covers the tr command = execute in sub shell
+        # 10# = prefixes with 10# (base-10), it specify the string should be intepreted as base-10 (decimal) number
+        #       Ensure the number is treated as decimal even it gas leading zero
+        # $(()) = treat as arithmetic expression
+        calcEndMinutes=$((10#$(tr -d ':' <<<"$bookingTimeTo")))
+        # Check if the booking duration is at least 30 minutes
+        if [[ $((calcEndMinutes - calcStartMinutes)) -lt 30 ]]; then
+          echo -e "\nInvalid input. A booking must be at least 30 minutes!\n"
+        else
+          break
+        fi
+      fi
+    done
+    # Booking purpose is just a side note, therefore no validation needed
+    read -rp $'Booking Purpose\t\t\t\t: ' bookingPurpose
+
+    UserSelection "Save & Generate the Booking Slip" "GenerateBookingSlip" "$roomNumber" "$bookingDate" "$bookingTimeFrom" "$bookingTimeTo" "$bookingPurpose"
   fi
 }
 
@@ -848,6 +924,7 @@ EOF
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
 # TASK        : Main Menu
 # DESCRIPTION : Main Menu of the program
 # PURPOSE     : Used to display the main menu of the program
@@ -906,6 +983,7 @@ MainMenu() {
 # TASK HEADER
 # ==============
 # AUTHOR 1    : WONG YAN ZHI
+# AUTHOR 2    : CHONG XIN NAN
 # TASK        : Start Program
 # DESCRIPTION : The first code segment to be run when the program is executed
 # PURPOSE     : To setup the folder structure, then call MainMenu function

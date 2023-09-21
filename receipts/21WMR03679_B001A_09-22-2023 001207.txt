@@ -1,0 +1,16 @@
+
+                            Venue Booking Slip
+
+Patron ID: 21WMR03679                                Patron Name: Wong Yan Zhi
+
+Room Number: B001A
+
+Booking Date: 09/23/2023
+
+Booking From: 10:00                                  Booking Until: 14:00
+
+Booking Purpose: For FYP Showcase
+
+    This is a system generated booking slip with no signature required.
+
+                      Printed on 22/09/2023 00:12:07
