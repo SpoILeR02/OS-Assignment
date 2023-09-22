@@ -653,7 +653,7 @@ CheckAvailableForBooking() {
       fi
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
       if [ "$2" == true ]; then
-        if [[ ! $1 < $(date -d "${chkBookingTimeFromArray[element]} - 30 minutes" +%H:%M) && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
+        if [[ ! $1 < $(date -d "${chkBookingTimeFromArray[element]} 30 minutes ago" +%H:%M) && $1 < "${chkBookingTimeUntilArray[element]}" ]]; then
           invalidBookingFlags=true
           break
         else
@@ -812,7 +812,9 @@ BookVenue() {
         echo -e "[FORMAT]: HH:MM, i.e 14:00\n"
       elif [[ $invalidBookingFlags = true ]]; then
         echo -e "\nInvalid input. The booking time entered is either already booked, or conflict with other booking time!"
-        echo -e "Please recheck the timeslot, and select another time.\n"
+        echo -e "It is possible that the selected booking time added up 30 minutes (minimum booking period),"
+        echo -e "will clash with other booking time."
+        echo -e "Please recheck the timeslot, and select another available time.\n"
       elif [[ $bookingTimeFrom < "08:00" || $bookingTimeFrom > "19:30" ]]; then
         # The reason to put 730pm is to reserve a 30 minutes of booking time
         echo -e "\nInvalid input. Booking Time From can only in between 0800hrs (8.00am) to 1930hrs (7.30pm)!\n"
